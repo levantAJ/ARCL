@@ -18,6 +18,8 @@
 		610C84301F4093D6001C0C14 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 610C842F1F4093D6001C0C14 /* MapKit.framework */; };
 		610C84321F40A733001C0C14 /* MKUserLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610C84311F40A733001C0C14 /* MKUserLocation.swift */; };
 		610C84341F40A7FC001C0C14 /* MKAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610C84331F40A7FC001C0C14 /* MKAnnotation.swift */; };
+		6199F22C1F41D7F800E1A648 /* CLLocationDistance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6199F22B1F41D7F800E1A648 /* CLLocationDistance.swift */; };
+		6199F22E1F41D90D00E1A648 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6199F22D1F41D90D00E1A648 /* TimeInterval.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +57,8 @@
 		610C842F1F4093D6001C0C14 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		610C84311F40A733001C0C14 /* MKUserLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MKUserLocation.swift; sourceTree = "<group>"; };
 		610C84331F40A7FC001C0C14 /* MKAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MKAnnotation.swift; sourceTree = "<group>"; };
+		6199F22B1F41D7F800E1A648 /* CLLocationDistance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLLocationDistance.swift; sourceTree = "<group>"; };
+		6199F22D1F41D90D00E1A648 /* TimeInterval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeInterval.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +116,8 @@
 				610C84021F407A74001C0C14 /* ViewController.swift */,
 				610C84311F40A733001C0C14 /* MKUserLocation.swift */,
 				610C84331F40A7FC001C0C14 /* MKAnnotation.swift */,
+				6199F22B1F41D7F800E1A648 /* CLLocationDistance.swift */,
+				6199F22D1F41D90D00E1A648 /* TimeInterval.swift */,
 				610C84041F407A74001C0C14 /* Main.storyboard */,
 				610C84071F407A74001C0C14 /* Assets.xcassets */,
 				610C84091F407A74001C0C14 /* LaunchScreen.storyboard */,
@@ -284,9 +290,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				610C84341F40A7FC001C0C14 /* MKAnnotation.swift in Sources */,
+				6199F22E1F41D90D00E1A648 /* TimeInterval.swift in Sources */,
 				610C84321F40A733001C0C14 /* MKUserLocation.swift in Sources */,
 				610C84031F407A74001C0C14 /* ViewController.swift in Sources */,
 				610C83FF1F407A74001C0C14 /* AppDelegate.swift in Sources */,
+				6199F22C1F41D7F800E1A648 /* CLLocationDistance.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

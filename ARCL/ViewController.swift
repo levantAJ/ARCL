@@ -20,7 +20,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     @IBOutlet weak var searchResultsWrapperView: UIVisualEffectView!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
-    @IBOutlet weak var routeDetailWrapperView: UIVisualEffectView!
+    @IBOutlet weak var routeDetailWrapperView: UIView!
     @IBOutlet weak var routeDetailWrapperViewBottomConstraint: NSLayoutConstraint!
     @IBOutlet weak var routeDetailLabel: UILabel!
     
@@ -99,6 +99,7 @@ extension ViewController {
     }
     
     @objc func directionButtonTapped(_ button: UIButton) {
+        searchBar.resignFirstResponder()
         let annotation = button.layer.value(forKey: Constant.ViewController.AnnotationKeyPath) as! MKAnnotation
         let request = MKDirectionsRequest()
         request.source = mapView.userLocation.mapItem
@@ -111,12 +112,12 @@ extension ViewController {
             if let response = response,
                 let route = response.routes.first {
                 strongSelf.mapView.add(route.polyline, level: .aboveRoads)
-                strongSelf.routeDetailLabel.text = "\(route.distance)m : \(route.expectedTravelTime/1000)minute"
+                strongSelf.routeDetailLabel.text = "\(route.distance.distanceString)・\(route.expectedTravelTime.timeString)"
                 strongSelf.routeDetailWrapperViewBottomConstraint.constant = -strongSelf.routeDetailWrapperView.bounds.height
                 strongSelf.routeDetailWrapperView.isHidden = false
-                UIView.animate(withDuration: 0.25) {
-                    strongSelf.routeDetailWrapperViewBottomConstraint.constant = 70.0
-                    strongSelf.wrapperView.layoutIfNeeded()
+                UIView.animate(withDuration: 0.25) { [weak self] in
+                    self?.routeDetailWrapperViewBottomConstraint.constant = 70.0
+                    self?.wrapperView.layoutIfNeeded()
                 }
                 //TODO: Go to AR mode
             } else {
@@ -125,6 +126,27 @@ extension ViewController {
                 strongSelf.present(alert, animated: true, completion: nil)
             }
         }
+    }
+    
+    @IBAction func goButtonTapped(button: UIButton) {
+        searchBar.resignFirstResponder()
+        UIView.animate(withDuration: 0.25) { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.wrapperViewTopContraint.constant = strongSelf.searchWrapperViewDefaultTopConstant
+            strongSelf.view.layoutIfNeeded()
+        }
+    }
+    
+    @IBAction func cancelButtonTapped(button: UIButton) {
+        searchBar.resignFirstResponder()
+        reset()
+        UIView.animate(withDuration: 0.25, animations: { [weak self] in
+            guard let strongSelf = self else { return }
+            strongSelf.routeDetailWrapperViewBottomConstraint.constant = -strongSelf.routeDetailWrapperView.bounds.height
+            strongSelf.wrapperView.layoutIfNeeded()
+        }, completion: { [weak self] _ in
+            self?.routeDetailWrapperView.isHidden = true
+        })
     }
 }
 
@@ -155,6 +177,19 @@ extension ViewController {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
     }
+    
+    /*
+     https://blog.classycode.com/how-to-write-a-pok%C3%A9mon-go-clone-for-ios-edf1cf1cf5ce
+     // convert geo coordinates to 3D coordinates in overlay
+     func coordinateToOverlayPosition(coordinate: CLLocationCoordinate2D)
+     -> SCNVector3
+     {
+     let p: CGPoint = mapView.convert(coordinate, toPointTo: mapView)
+     return SCNVector3Make(Float(p.x),
+     Float(sceneRect.size.height - p.y),
+     0)
+     }
+     */
 }
 
 // MARK: - MKMapViewDelegate
@@ -184,9 +219,13 @@ extension ViewController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         let renderer = MKPolylineRenderer(overlay: overlay)
-        renderer.strokeColor = .green
+        renderer.strokeColor = MKPinAnnotationView.purplePinColor()
         renderer.lineWidth = 8.0
         return renderer
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        searchBar.resignFirstResponder()
     }
 }
 
@@ -200,8 +239,11 @@ extension ViewController: CLLocationManagerDelegate {
 
 extension ViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        searchResultsWrapperView.isHidden = searchText.isEmpty
-        localSearchCompleter.queryFragment = searchText
+        searchLocations(searchText: searchText)
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchLocations(searchText: searchBar.text!)
     }
 }
 
@@ -236,18 +278,24 @@ extension ViewController: UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let completion = localSearchCompleter.results[indexPath.row]
-        let request = MKLocalSearchRequest(completion: completion)
-        let localSearch = MKLocalSearch(request: request)
-        localSearch.start { [weak self] (response, error) in
-            guard let response = response else { return }
-            for (index, mapItem) in response.mapItems.enumerated() {
-                let annotation = MKPointAnnotation()
-                annotation.title = mapItem.placemark.title
-                annotation.coordinate = mapItem.placemark.coordinate
-                self?.mapView.addAnnotation(annotation)
-                if index == 0 {
-                    self?.mapView.setCenter(annotation.coordinate, animated: true)
+        reset()
+        DispatchQueue(label: "com.levantAJ.ARCL.queue.load-location").async { [weak self] in
+            guard let strongSelf = self else { return }
+            let completion = strongSelf.localSearchCompleter.results[indexPath.row]
+            let request = MKLocalSearchRequest(completion: completion)
+            let localSearch = MKLocalSearch(request: request)
+            localSearch.start { [weak self] (response, error) in
+                guard let response = response else { return }
+                DispatchQueue.main.async { [weak self] in
+                    for (index, mapItem) in response.mapItems.enumerated() {
+                        let annotation = MKPointAnnotation()
+                        annotation.title = mapItem.placemark.title
+                        annotation.coordinate = mapItem.placemark.coordinate
+                        self?.mapView.addAnnotation(annotation)
+                        if index == 0 {
+                            self?.mapView.setCenter(annotation.coordinate, animated: true)
+                        }
+                    }
                 }
             }
         }
@@ -260,7 +308,7 @@ extension ViewController: UITableViewDelegate {
 // MARK: - Privates
 
 extension ViewController {
-    var searchWrapperViewDefaultTopConstant: CGFloat {
+    fileprivate var searchWrapperViewDefaultTopConstant: CGFloat {
         return UIScreen.main.bounds.height - searchWrapperView.bounds.height - Constant.ViewController.BottomPadding
     }
     
@@ -274,6 +322,17 @@ extension ViewController {
     @objc func keyboardWillHide() {
         
     }
+    
+    fileprivate func reset() {
+        mapView.removeOverlays(mapView.overlays)
+        let annotations = mapView.annotations.filter { !$0.isKind(of: MKUserLocation.self) }
+        mapView.removeAnnotations(annotations)
+    }
+    
+    fileprivate func searchLocations(searchText: String) {
+        searchResultsWrapperView.isHidden = searchText.isEmpty
+        localSearchCompleter.queryFragment = searchText
+    }
 }
 
 struct Constant {}
@@ -281,7 +340,7 @@ struct Constant {}
 extension Constant {
     struct ViewController {
         static let TopPadding = CGFloat(20)
-        static let BottomPadding = CGFloat(100)
+        static let BottomPadding = CGFloat(80)
         static let AnnotationViewIdentifier = "AnnotationView"
         static let TableViewCellIdentifier = "TableViewCell"
         static let AnnotationKeyPath = "AnnotationKeyPath"
